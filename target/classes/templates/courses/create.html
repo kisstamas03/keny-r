@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Új kurzus létrehozása - E-Learning Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+        }
+
+        body {
+            background-color: #f8fafc;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #3b82f6 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h5 {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .file-preview {
+            background: #f8fafc;
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .file-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-graduation-cap me-2"></i>
+            E-Learning Platform
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Főoldal</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/courses">Kurzusok</a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav">
+                <div sec:authorize="isAuthenticated()">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <span sec:authentication="name">Felhasználó</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Profil</a></li>
+                            <li><a class="dropdown-item" href="/my-courses"><i class="fas fa-book me-2"></i>Kurzusaim</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Kijelentkezés
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </div>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="display-4 fw-bold">
+            <i class="fas fa-plus me-3"></i>Új kurzus létrehozása
+        </h1>
+        <p class="lead">Osztd meg tudásod diákokkal világszerte</p>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${success}">Sikeres művelet</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span th:text="${error}">Hiba történt</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="form-card">
+                <form th:action="@{/courses/create}" method="post" th:object="${course}" enctype="multipart/form-data">
+
+                    <!-- Alapinformációk -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-info-circle me-2"></i>Alapinformációk
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Kurzus címe *</label>
+                            <input type="text" class="form-control" id="title" th:field="*{title}"
+                                   placeholder="pl. Java programozás alapjai" required maxlength="100">
+                            <small class="text-muted">Maximum 100 karakter</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Leírás *</label>
+                            <textarea class="form-control" id="description" th:field="*{description}"
+                                      rows="5" placeholder="Részletes leírás a kurzusról..."
+                                      required maxlength="500"></textarea>
+                            <small class="text-muted">Maximum 500 karakter</small>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="isPublic" th:field="*{isPublic}" checked>
+                            <label class="form-check-label" for="isPublic">
+                                <i class="fas fa-globe me-2"></i>Publikus kurzus
+                            </label>
+                            <small class="form-text text-muted d-block">
+                                Ha nincs bejelölve, csak a hozzáadott diákok láthatják a kurzust
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- PDF Prezentációk -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-file-pdf me-2"></i>PDF Prezentációk
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="presentations" class="form-label">PDF vagy PowerPoint fájlok feltöltése</label>
+                            <input type="file" class="form-control" id="presentations" name="presentations"
+                                   accept=".pdf,.ppt,.pptx" multiple>
+                            <small class="text-muted">Támogatott formátumok: PDF, PPT, PPTX (max. 50MB fájlonként)</small>
+                        </div>
+
+                        <div id="filePreview" class="file-preview" style="display: none;">
+                            <h6>Feltöltendő fájlok:</h6>
+                            <div id="fileList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gombsor -->
+                    <div class="mt-5 d-flex gap-2 justify-content-end">
+                        <a href="/courses" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Mégse
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Kurzus létrehozása
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tippek -->
+            <div class="card mt-4">
+                <div class="card-header bg-info bg-opacity-10">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Tippek a jó kurzushoz
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Egyértelmű cím:</strong> A cím legyen deskriptív és érdekes
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Jó leírás:</strong> Írj részletes leírást, mely információt közvetít
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>PDF prezentációk:</strong> Tölts fel logikus sorrendben PDF-eket
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-light py-5 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5><i class="fas fa-graduation-cap me-2"></i>E-Learning Platform</h5>
+                <p class="text-muted">Modern online tanulási platform mindenkinek.</p>
+            </div>
+        </div>
+        <hr class="text-muted">
+        <div class="text-center text-muted">
+            <small>&copy; 2024 E-Learning Platform. Minden jog fenntartva.</small>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+    const fileInput = document.getElementById('presentations');
+    const filePreview = document.getElementById('filePreview');
+    const fileList = document.getElementById('fileList');
+
+    fileInput.addEventListener('change', function() {
+        fileList.innerHTML = '';
+
+        if (this.files.length > 0) {
+            filePreview.style.display = 'block';
+
+            for (let file of this.files) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div>
+                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                        <strong>${file.name}</strong>
+                        <small class="text-muted d-block">${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                    </div>
+                    <i class="fas fa-check text-success"></i>
+                `;
+                fileList.appendChild(fileItem);
+            }
+        } else {
+            filePreview.style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
