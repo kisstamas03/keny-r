@@ -34,13 +34,31 @@ public class SecurityConfig {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
-                        .requestMatchers("/courses/create", "/admin/**").hasAnyRole("INSTRUCTOR", "ADMIN")
+                        // Publikus útvonalak
+                        .requestMatchers("/", "/login", "/register",
+                                "/css/**", "/js/**", "/images/**",
+                                "/h2-console/**").permitAll()
+
+                        // Admin-only
+                        .requestMatchers("/dashboard/admin/**",
+                                "/admin/**").hasRole("ADMIN")
+
+                        // Oktató + Admin
+                        .requestMatchers("/courses/create",
+                                "/dashboard/instructor/**").hasAnyRole("INSTRUCTOR", "ADMIN")
+
+                        // Diák + Admin
+                        .requestMatchers("/dashboard/student/**").hasAnyRole("STUDENT", "ADMIN")
+
+                        // Dashboard főútvonal – bejelentkezett felhasználóknak
+                        .requestMatchers("/dashboard").authenticated()
+
+                        // Minden más bejelentkezést igényel
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        .defaultSuccessUrl("/dashboard", true)   // ← szerepkör szerinti átirányítás
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )

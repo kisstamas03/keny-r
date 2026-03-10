@@ -5,6 +5,7 @@ import com.melearning.elearning.model.Presentation;
 import com.melearning.elearning.model.User;
 import com.melearning.elearning.service.CourseService;
 import com.melearning.elearning.service.PresentationService;
+import com.melearning.elearning.service.QuizService;
 import com.melearning.elearning.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
@@ -35,6 +36,9 @@ public class CourseController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private QuizService quizService;
 
     @GetMapping
     public String listCourses(Model model, Authentication auth) {
@@ -108,6 +112,9 @@ public class CourseController {
 
         model.addAttribute("course", courseObj);
         model.addAttribute("presentations", presentationService.getPresentationsByCourse(courseObj));
+
+        //teszt
+        model.addAttribute("quizzes", quizService.getQuizzesByCourse(courseObj));
 
         if (auth != null) {
             Optional<User> user = userService.getUserByUsername(auth.getName());
@@ -311,6 +318,51 @@ public class CourseController {
             }
         }
 
+        return "redirect:/courses/" + id + "/manage";
+    }
+
+    @PostMapping("/{id}/add-presentations")
+    public String addPresentationsToCourse(@PathVariable Long id,
+                                           @RequestParam("newPresentations") MultipartFile[] newPresentations,
+                                           Authentication auth,
+                                           RedirectAttributes redirectAttributes) {
+        Optional<Course> courseOpt = courseService.getCourseById(id);
+
+        if (courseOpt.isPresent() && auth != null) {
+            Course course = courseOpt.get();
+            Optional<User> user = userService.getUserByUsername(auth.getName());
+
+            // Biztonsági ellenőrzés: Csak a kurzus oktatója adhat hozzá új fájlt
+            if (user.isPresent() && course.getInstructor().equals(user.get())) {
+
+                if (newPresentations != null && newPresentations.length > 0) {
+                    try {
+                        // Megkeressük, hányadik fájlnál tartunk, hogy jó legyen a sorrend (opcionális)
+                        int currentOrder = presentationService.getPresentationsByCourse(course).size() + 1;
+
+                        for (MultipartFile file : newPresentations) {
+                            if (!file.isEmpty()) {
+                                String fileName = file.getOriginalFilename();
+                                if (fileName != null && (fileName.toLowerCase().endsWith(".pdf") ||
+                                        fileName.toLowerCase().endsWith(".ppt") ||
+                                        fileName.toLowerCase().endsWith(".pptx"))) {
+
+                                    // Ugyanazt a szerviz hívást használjuk, mint a létrehozásnál
+                                    presentationService.processAndSavePresentation(file, course, currentOrder++);
+                                }
+                            }
+                        }
+                        redirectAttributes.addFlashAttribute("success", "Az új fájlok sikeresen hozzáadva!");
+                    } catch (Exception e) {
+                        redirectAttributes.addFlashAttribute("error", "Hiba a fájlok feltöltése közben: " + e.getMessage());
+                    }
+                }
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Nincs jogosultságod módosítani ezt a kurzust!");
+            }
+        }
+
+        // Visszairányítjuk a felhasználót a manage oldalra
         return "redirect:/courses/" + id + "/manage";
     }
 }
